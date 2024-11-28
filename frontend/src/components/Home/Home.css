@@ -1,0 +1,22 @@
+body {
+    background-color: #f7f7f7;
+  }
+  
+  .card {
+    max-width: 400px;
+    width: 100%;
+    margin: 20px auto;
+  }
+  
+  .header h2 {
+    font-size: 24px;
+    color: #007bff;
+  }
+  
+  .underline {
+    width: 50px;
+    height: 3px;
+    background-color: #007bff;
+    margin: 10px auto;
+  }
+  

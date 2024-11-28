@@ -27,4 +27,35 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/register', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  try {
+    // Kiểm tra xem email đã tồn tại chưa
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email đã tồn tại' });
+    }
+
+    // Tạo mới người dùng
+    const newUser = new User({
+      username,
+      email,
+      password, // Lưu mật khẩu không mã hóa
+    });
+
+    // Lưu người dùng vào cơ sở dữ liệu
+    await newUser.save();
+
+    // Tạo token khi đăng ký thành công
+    const token = jwt.sign({ userId: newUser._id }, 'secret_key', { expiresIn: '1h' });
+
+    res.status(201).json({ message: 'Đăng ký thành công', token });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+});
+
+
 module.exports = router;
