@@ -8,10 +8,13 @@ const verifyToken = (req, res, next) => {
   const token = req.headers['authorization'];
 
   if (!token) {
-    return res.status(403).json({ message: 'Không có quyền truy cập' });
+    return res.status(401).json({ message: 'Token không có' });  // Đổi từ 403 thành 401
   }
 
-  jwt.verify(token, 'secret_key', (err, decoded) => {
+  // Loại bỏ "Bearer " nếu có trong token
+  const tokenValue = token.split(' ')[1];
+
+  jwt.verify(tokenValue, 'secret_key', (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Token không hợp lệ' });
     }
