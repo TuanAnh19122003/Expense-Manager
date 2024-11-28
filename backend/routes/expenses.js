@@ -1,11 +1,29 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const Expense = require('../models/Expense'); // Giả sử bạn có một model Expense
 const router = express.Router();
 
-// Lấy toàn bộ danh sách chi tiêu và thông tin tên category
-router.get('/', async (req, res) => {
+// Middleware để xác thực JWT
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+
+  if (!token) {
+    return res.status(403).json({ message: 'Không có quyền truy cập' });
+  }
+
+  jwt.verify(token, 'secret_key', (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Token không hợp lệ' });
+    }
+    req.userId = decoded.userId;  // Lưu userId vào request để sử dụng sau
+    next();
+  });
+};
+
+// Lấy toàn bộ danh sách chi tiêu của người dùng đã đăng nhập
+router.get('/', verifyToken, async (req, res) => {
   try {
-    const expenses = await Expense.find()
+    const expenses = await Expense.find({ user: req.userId })  // Lọc chi tiêu theo userId
       .populate('category', 'name')  // Populate tên của category
       .sort({ date: -1 });  // Sắp xếp theo ngày giảm dần
     res.status(200).json({ expenses });
@@ -14,9 +32,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-
-// Thêm chi tiêu với thông tin category là ObjectId
-router.post('/', async (req, res) => {
+// Thêm chi tiêu (cập nhật thêm userId để phân biệt chi tiêu của người dùng)
+router.post('/', verifyToken, async (req, res) => {
   const { amount, description, category, date } = req.body;
 
   try {
@@ -25,6 +42,7 @@ router.post('/', async (req, res) => {
       description,
       category,  // category là ObjectId của Category
       date,
+      user: req.userId,  // Gắn userId vào chi tiêu
     });
 
     // Lưu chi tiêu vào cơ sở dữ liệu
@@ -39,14 +57,13 @@ router.post('/', async (req, res) => {
   }
 });
 
-
-// Lấy chi tiết chi tiêu theo ID và thông tin tên category
-router.get('/:id', async (req, res) => {
+// Lấy chi tiết chi tiêu theo ID
+router.get('/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const expense = await Expense.findById(id)
-      .populate('category', 'name');  // Populate tên của category
+    const expense = await Expense.findOne({ _id: id, user: req.userId })  // Kiểm tra xem chi tiêu có thuộc về user hiện tại không
+      .populate('category', 'name');
     if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
     }
@@ -56,18 +73,17 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Cập nhật chi tiêu theo ID và thông tin category
-router.put('/:id', async (req, res) => {
+// Cập nhật chi tiêu theo ID
+router.put('/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   const { amount, description, category, date } = req.body;
 
   try {
-    const updatedExpense = await Expense.findByIdAndUpdate(
-      id,
+    const updatedExpense = await Expense.findOneAndUpdate(
+      { _id: id, user: req.userId },  // Chỉ cho phép người dùng cập nhật chi tiêu của chính họ
       { amount, description, category, date },
-      { new: true }  // Trả về đối tượng đã được cập nhật
-    )
-    .populate('category', 'name');  // Populate tên của category
+      { new: true }
+    ).populate('category', 'name');
 
     if (!updatedExpense) {
       return res.status(404).json({ message: 'Expense not found' });
@@ -82,13 +98,12 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-
 // Xóa chi tiêu theo ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const deletedExpense = await Expense.findByIdAndDelete(id);
+    const deletedExpense = await Expense.findOneAndDelete({ _id: id, user: req.userId });  // Xóa chi tiêu của người dùng hiện tại
     if (!deletedExpense) {
       return res.status(404).json({ message: 'Expense not found' });
     }

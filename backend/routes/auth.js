@@ -19,7 +19,11 @@ router.post('/login', async (req, res) => {
     }
 
     // Tạo token sau khi xác thực thành công
-    const token = jwt.sign({ userId: user._id }, 'secret_key', { expiresIn: '1h' });
+    const token = jwt.sign(
+      { userId: user._id, username: user.username }, // Lưu thêm username vào payload
+      'secret_key',
+      { expiresIn: '1h' }
+    );
     res.json({ token });
   } catch (err) {
     console.error('Login error:', err);
@@ -41,8 +45,9 @@ router.post('/register', async (req, res) => {
     const newUser = new User({
       username,
       email,
-      password, // Lưu mật khẩu không mã hóa
+      password,
     });
+
 
     // Lưu người dùng vào cơ sở dữ liệu
     await newUser.save();
@@ -56,6 +61,5 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Lỗi server' });
   }
 });
-
 
 module.exports = router;
