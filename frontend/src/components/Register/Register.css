@@ -1,0 +1,21 @@
+/* Đảm bảo card có shadow */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header h2 {
+    font-size: 30px;
+}
+  
+.input-group-text {
+    background-color: #f8f9fa; /* Màu nền sáng cho biểu tượng */
+}
+  
+.underline {
+    height: 3px;
+    background-color: #007bff;
+    width: 50px;
+    margin: 0 auto;
+    margin-top: 10px;
+}
