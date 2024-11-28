@@ -44,12 +44,15 @@ const createExpenseFromInput = async () => {
     rl.question('Chọn người dùng (nhập số thứ tự): ', async (userIndex) => {
       rl.question('Nhập số tiền: ', async (amount) => {
         rl.question('Nhập mô tả: ', async (description) => {
-          rl.question('Nhập ngày chi tiêu (yyyy-mm-dd): ', async (date) => {
+          rl.question('Nhập ngày chi tiêu (yyyy-mm-dd) hoặc nhấn Enter để chọn ngày hiện tại: ', async (date) => {
+            // Nếu người dùng không nhập ngày, sử dụng ngày hiện tại
+            const expenseDate = date ? new Date(date) : new Date(); // Nếu có nhập ngày, chuyển thành Date, nếu không lấy ngày hiện tại
+
             // Tạo một đối tượng Expense mới với các giá trị từ người dùng
             const expense = new Expense({
               amount: parseFloat(amount),
               description,
-              date: new Date(date), // Chuyển đổi chuỗi thành đối tượng Date
+              date: expenseDate, // Sử dụng ngày đã chọn (hoặc ngày hiện tại)
               category: categories[parseInt(categoryIndex) - 1]._id, // Lấy ObjectId của category đã chọn
               user: users[parseInt(userIndex) - 1]._id // Lấy ObjectId của user đã chọn
             });
@@ -66,6 +69,7 @@ const createExpenseFromInput = async () => {
             rl.close();
             mongoose.connection.close();
           });
+
         });
       });
     });
